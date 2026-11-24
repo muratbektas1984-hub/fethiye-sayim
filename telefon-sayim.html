@@ -18,7 +18,6 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-  <!-- Üst Bar -->
   <header class="bg-slate-900 text-white px-4 py-3 shadow flex items-center justify-between gap-2">
     <div>
       <h1 class="text-base font-bold tracking-wide uppercase">Kutay Fethiye Sayım</h1>
@@ -28,13 +27,12 @@
       <span id="operatorBadge" class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 font-semibold">
         -
       </span>
-      <button onclick="openOperatorModal()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded font-semibold">
+      <button type="button" onclick="openOperatorModal()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded font-semibold">
         Ad
       </button>
     </div>
   </header>
 
-  <!-- İlk Açılış Personel Adı Modalı -->
   <div id="operatorModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl">
       <h2 class="text-base font-bold mb-2">Sayım Yapan Kişi</h2>
@@ -42,23 +40,21 @@
       <input id="operatorInput" type="text" placeholder="Ad Soyad"
         onkeydown="if(event.key==='Enter') saveOperator()"
         class="w-full border rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-600" />
-      <button onclick="saveOperator()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg">
+      <button type="button" onclick="saveOperator()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg">
         Kaydet
       </button>
     </div>
   </div>
 
-  <!-- Uyarı / Bildirim Bannerı -->
   <div id="alertBanner" class="hidden max-w-xl mx-auto mt-3 px-4">
     <div id="alertInner" class="px-4 py-3 rounded-xl border text-sm font-semibold flex items-center justify-between shadow">
       <span id="alertText"></span>
-      <button onclick="hideAlert()" class="text-xs underline ml-3">Kapat</button>
+      <button type="button" onclick="hideAlert()" class="text-xs underline ml-3">Kapat</button>
     </div>
   </div>
 
   <main class="max-w-xl mx-auto p-4 space-y-4">
 
-    <!-- Dönem Seçimi -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-2.5">
       <div class="flex items-center justify-between">
         <label class="text-xs font-bold text-slate-700 uppercase">Sayım Dönemi</label>
@@ -70,14 +66,13 @@
         <input id="periodInput" type="text" value="DENEME"
           onchange="pullState(false, true)"
           class="flex-1 border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
-        <button onclick="pullState(true, false)"
+        <button type="button" onclick="pullState(true, false)"
           class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl">
           Yenile
         </button>
       </div>
     </section>
 
-    <!-- Kamera ile Okutma & Adet Giriş -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
       <div class="flex items-center justify-between border-b pb-2">
         <h2 class="font-bold text-sm">Kamera ile Parça Okut</h2>
@@ -89,10 +84,10 @@
       <div id="qr-reader" class="w-full rounded-xl overflow-hidden bg-slate-900 min-h-[210px]"></div>
 
       <div class="flex gap-2">
-        <button onclick="startScanner()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl">
+        <button type="button" onclick="startScanner()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl">
           Kamerayı Aç
         </button>
-        <button onclick="stopScanner()" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-xl">
+        <button type="button" onclick="stopScanner()" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-xl">
           Kamerayı Kapat
         </button>
       </div>
@@ -112,14 +107,13 @@
             class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base font-bold focus:outline-none focus:ring-2 focus:ring-blue-600" />
         </div>
 
-        <button id="btnSaveScan" onclick="recordCount()" disabled
+        <button id="btnSaveScan" type="button" onclick="recordCount()" disabled
           class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-sm">
           Kaydet
         </button>
       </div>
     </section>
 
-    <!-- Okutulan Parçalar -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-2">
       <h2 class="font-bold text-sm">Okutulan Parçalar</h2>
       <div class="overflow-x-auto">
@@ -151,6 +145,7 @@
 
     let state = {
       status: 'idle',
+      expectedParts: {},
       scannedParts: {}
     };
 
@@ -167,8 +162,28 @@
       return u;
     }
 
-    function normalizePart(raw) {
-      return (raw || '').toString().trim().toUpperCase();
+    function normalizePart(raw, fromScanner = false) {
+      let code = (raw || '')
+        .toString()
+        .replace(/[\r\n\t]+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      if (!code) return '';
+
+      code = code.replace(/[\s\-]+1$/, '').trim();
+
+      const expectedKeys = Object.keys(state.expectedParts || {});
+      if (code.length > 6 && code.endsWith('1')) {
+        const withoutTrailingOne = code.slice(0, -1);
+        if (expectedKeys.includes(withoutTrailingOne) && !expectedKeys.includes(code)) {
+          code = withoutTrailingOne;
+        } else if (fromScanner && /^[A-Z0-9]{7,}[A-Z]1$/.test(code)) {
+          code = withoutTrailingOne;
+        }
+      }
+
+      return code;
     }
 
     function periodKey() {
@@ -233,17 +248,12 @@
 
         state = {
           status: (data && data.status) || 'idle',
+          expectedParts: (data && data.expectedParts) || {},
           scannedParts: (data && data.scannedParts) || {}
         };
 
         refreshStateUI();
-        if (notify) showAlert(`Dönem güncellendi: ${periodKey()}`, 'success');
-        return true;
-      } catch (e) {
-        const b = document.getElementById('dbBadge');
-        b.textContent = 'Bağlantı Hatası';
-        b.className = 'text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold';
-        if (!silent) showAlert(`Bağlantı hatası: ${e.message}`, 'error');
+        if (notify) showAlert(`Dönem güncellendi: ${periodKey()}`, 'success'); return true; } catch (e) { const b = document.getElementById('dbBadge'); b.textContent = 'Bağlantı Hatası'; b.className = 'text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold'; if (!silent) showAlert(`Bağlantı hatası: ${e.message}`, 'error');
         return false;
       }
     }
@@ -264,24 +274,7 @@
       }
 
       document.getElementById('btnSaveScan').disabled = !isActive;
-      document.getElementById('countedCountBadge').textContent = `Okutulan: ${Object.keys(state.scannedParts || {}).length}`;
-      renderCountedList();
-    }
-
-    async function recordCount() {
-      if (!operator) return openOperatorModal();
-      if (state.status !== 'active') return showAlert('Sayım henüz başlatılmadı! Bilgisayardan "Sayımı Başlat" butonuna basın.', 'warn');
-
-      const partNo = normalizePart(document.getElementById('scanPartInput').value);
-      const qty = parseInt(document.getElementById('scanQtyInput').value, 10);
-
-      if (!partNo) return showAlert('Parça numarası okutun veya girin.', 'warn');
-      if (!qty || qty <= 0) return showAlert('Geçerli bir adet girin.', 'warn');
-
-      await pullState(false, false);
-      const existing = state.scannedParts && state.scannedParts[partNo];
-      if (existing) {
-        showAlert(`UYARI: "${partNo}" daha önce ${existing.by} tarafından (${existing.countedQty} adet) okutulmuş! Tekrar okutulamaz.`, 'error');
+      document.getElementById('countedCountBadge').textContent = `Okutulan: ${Object.keys(state.scannedParts \vert{}\vert{} {}).length}`; renderCountedList(); }  async function recordCount() { if (!operator) return openOperatorModal(); if (state.status !== 'active') return showAlert('Sayım henüz başlatılmadı! Bilgisayardan "Sayımı Başlat" butonuna basın.', 'warn');  const partNo = normalizePart(document.getElementById('scanPartInput').value, true); document.getElementById('scanPartInput').value = partNo; const qty = parseInt(document.getElementById('scanQtyInput').value, 10);  if (!partNo) return showAlert('Parça numarası okutun veya girin.', 'warn'); if (!qty \vert{}\vert{} qty <= 0) return showAlert('Geçerli bir adet girin.', 'warn');  await pullState(false, false); const existing = state.scannedParts && state.scannedParts[partNo]; if (existing) { showAlert(`UYARI: "${partNo}" daha önce ${existing.by} tarafından (${existing.countedQty} adet) okutulmuş! Tekrar okutulamaz.`, 'error');
         document.getElementById('scanPartInput').select();
         return;
       }
@@ -324,46 +317,4 @@
         <tr>
           <td class="py-2 px-2 font-mono font-bold">${item.partNo}</td>
           <td class="py-2 px-2 text-right font-bold text-emerald-700">${item.countedQty}</td>
-          <td class="py-2 px-2">${item.by || '-'}</td>
-        </tr>
-      `).join('');
-    }
-
-    async function startScanner() {
-      if (qrScanner) return;
-      qrScanner = new Html5Qrcode('qr-reader');
-      try {
-        await qrScanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 220, height: 140 } },
-          async (decoded) => {
-            const clean = normalizePart(decoded);
-            document.getElementById('scanPartInput').value = clean;
-            await pullState(false, false);
-            const existing = state.scannedParts && state.scannedParts[clean];
-            if (existing) {
-              showAlert(`UYARI: "${clean}" daha önce ${existing.by} tarafından (${existing.countedQty} adet) okutulmuş! Tekrar okutulamaz.`, 'error');
-              document.getElementById('scanPartInput').value = '';
-            } else {
-              document.getElementById('scanQtyInput').focus();
-            }
-          },
-          () => {}
-        );
-      } catch (e) {
-        showAlert('Kamera açılamadı. HTTPS ve kamera iznini kontrol edin.', 'warn');
-        qrScanner = null;
-      }
-    }
-
-    async function stopScanner() {
-      if (!qrScanner) return;
-      try {
-        await qrScanner.stop();
-        qrScanner.clear();
-      } catch (_) {}
-      qrScanner = null;
-    }
-  </script>
-</body>
-</html>
+          <td class="py
